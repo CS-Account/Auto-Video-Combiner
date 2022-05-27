@@ -9,6 +9,7 @@ FFmpeg is used to combine the video files through subprocess.
 * Accept regex and template for output file name
 * Accept folder path for output files
 * Create module to join one or more video files in order
+* [TODO] Multi-thread using actions and threads
 
 ## Usage
     usage: auto_combiner.py [-h] -i INPUT_FOLDER [--input-regex INPUT_REGEX] [-r] -o OUTPUT_FOLDER [--output-regex OUTPUT_REGEX] [-t OUTPUT_FILE_TEMPLATE] [-d] [-c | -w]

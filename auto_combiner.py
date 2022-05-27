@@ -263,14 +263,14 @@ class AutoCombiner:
                 )
 
         for message_type, messages in messages.items():
-            print(message_type)
+            print("{} ({})".format(message_type, len(messages)))
             for message in messages:
                 print(message)
 
         if not dry_run:
             print("\nPerforming Actions:\n")
             for action_type, actions_list in actions.items():
-                print("{} List".format(action_type))
+                print("{} List ({})".format(action_type, len(actions_list)))
                 times = []
                 for output_file, number_of_items, action in actions_list:
                     print(
@@ -289,7 +289,7 @@ class AutoCombiner:
                     average_time = sum(times) / len(times)
                     actions_remaining_in_list = len(actions_list) - len(times)
                     print(
-                        "\t\tProcess Took: {:.2f} seconds (estimating {:.2f} seconds till {} list ({}/{} {:.2f}%) is complete)".format(
+                        "\t\tProcess Took: {:.2f} seconds (estimating {:.2f} seconds till {} list is complete) ({}/{} {:.2f}%)".format(
                             time.time() - start_time,
                             average_time * actions_remaining_in_list,
                             action_type,
