@@ -1,7 +1,11 @@
-# Auto Combiner
+# Auto Video Combiner
 ## Description
-Auto Combiner is a tool that combines multiple video files into one video file with muxing.
+Auto Video Combiner is a simple command line tool/script that automates combining multiple video files into one video file with muxing.
+
 FFmpeg is used to combine the video files through subprocess.
+
+## Requirements
+* [FFmpeg](https://www.ffmpeg.org/) - Of a late enough version to include the muxing feature.
 
 ## Project Goals
 * Accept regex for file increment matching regex group is the part which will be looked at for sortation.
