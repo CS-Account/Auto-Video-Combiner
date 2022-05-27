@@ -77,7 +77,7 @@ class AutoCombiner:
         output_filename = re.sub(r"\\/", "/", output_filename)
         return output_filename
 
-    def auto_combine_videos(self, input_folder_path, output_folder_path, input_regex, output_regex, output_template, reverse_order=False, dry_run=False, combine_type=COMBINETYPE.SKIP):
+    def auto_combine_videos(self, input_folder_path, output_folder_path, input_regex, output_regex, output_template, reverse_order=False, dry_run=False, combine_type=COMBINETYPE.SKIP, verbose=False):
         """Combine video files from input folder using regex."""
         self.errors = []
 
@@ -110,7 +110,7 @@ class AutoCombiner:
 
             message = "\t(Dry Run) " if dry_run else "\t"
 
-            def internal_combine_videos(input_files, output_file, combine=False):
+            def internal_combine_videos(input_files, output_file, combine=False, verbose=False):
                 if combine:
                     backup_file = output_file + ".bak"
 
@@ -121,7 +121,7 @@ class AutoCombiner:
                     else:
                         new_input_files = [backup_file, *input_files]
 
-                    result = video_combiner.combine_videos(new_input_files, output_file)
+                    result = video_combiner.combine_videos(new_input_files, output_file, verbose=verbose)
 
                     # Revert changes if combine failed.
                     if result is None:
@@ -131,18 +131,18 @@ class AutoCombiner:
                             os.remove(output_file)
                         os.rename(backup_file, output_file)
                 else:
-                    result = video_combiner.combine_videos(input_files, output_file)
+                    result = video_combiner.combine_videos(input_files, output_file, verbose=verbose)
                 return result
 
             if not file_exists:
                 message = message + "Creating {} with files:\n\t\t{}".format(output_file, "\n\t\t".join(input_files))
                 messages.setdefault("Creating", []).append(message)
-                actions.setdefault("Creating", []).append((output_file, len(input_files), functools.partial(internal_combine_videos, input_files, output_file)))
+                actions.setdefault("Creating", []).append((output_file, len(input_files), functools.partial(internal_combine_videos, input_files, output_file, verbose=verbose)))
             elif combine_type == self.COMBINETYPE.OVERWRITE:
                 message = message + "Overwriting {} with files:\n\t\t{}".format(output_file, "\n\t\t".join(input_files))
                 messages.setdefault("Overwriting", []).append(message)
                 actions.setdefault("Overwriting", []).append((output_file, len(input_files),
-                                                              functools.partial(internal_combine_videos, input_files, output_file)))
+                                                              functools.partial(internal_combine_videos, input_files, output_file, verbose=verbose)))
             elif combine_type == self.COMBINETYPE.SKIP:
                 message = message + "Skipping {} with files:\n\t\t{}".format(output_file, "\n\t\t".join(input_files))
                 messages.setdefault("Skipping", []).append(message)
@@ -151,7 +151,7 @@ class AutoCombiner:
                 message = message + "Combining {} with files:\n\t\t{}".format(output_file, "\n\t\t".join(input_files))
                 messages.setdefault("Combining", []).append(message)
                 actions.setdefault("Combining", []).append((output_file, len(input_files),
-                                                            functools.partial(internal_combine_videos, input_files, output_file, True)))
+                                                            functools.partial(internal_combine_videos, input_files, output_file, True, verbose)))
 
         for message_type, messages in messages.items():
             print(message_type)
@@ -175,8 +175,8 @@ class AutoCombiner:
                     times.append(time_total)
                     average_time = sum(times) / len(times)
                     actions_remaining_in_list = len(actions_list) - len(times)
-                    print("\t\tProcess Took: {:.2f} seconds (estimating {:.2f} seconds till {} list is complete)".format(
-                        time.time() - start_time, average_time * actions_remaining_in_list, action_type))
+                    print("\t\tProcess Took: {:.2f} seconds (estimating {:.2f} seconds till {} list ({}/{}) is complete)".format(
+                        time.time() - start_time, average_time * actions_remaining_in_list, action_type, actions_remaining_in_list, len(actions_list)))
 
                     if result:
                         self.errors.append("Error combining video: {} with error: {}".format(output_file, result))
@@ -197,6 +197,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--output-file-template", default="$1$2",
                         help="Template for output video file name. Use $[groupnumber] for substitution and /[number of leading 0s] for number of files combined. '\\' escapes (Default: $1$2)")
     parser.add_argument("-d", "--dry-run", action="store_true", help="Do not execute ffmpeg, but print out video sets.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Print out all ffmpeg output.")
 
     overwrite_combine_group = parser.add_mutually_exclusive_group()
     overwrite_combine_group.add_argument("-c", "--combine", action="store_true",
@@ -214,7 +215,7 @@ if __name__ == "__main__":
     # Combine videos.
     auto_combiner = AutoCombiner()
     errors = auto_combiner.auto_combine_videos(args.input_folder, args.output_folder, args.input_regex,
-                                               args.output_regex, args.output_file_template, args.reverse_order, args.dry_run, combine_option)
+                                               args.output_regex, args.output_file_template, args.reverse_order, args.dry_run, combine_option, args.verbose)
 
     if errors:
         error_message = "Errors:\n\t" + "\n\t".join(errors)

@@ -1,6 +1,6 @@
 import subprocess, os
 
-def combine_videos(input_files, output_file):
+def combine_videos(input_files, output_file, verbose=False):
     """Combine input video files into a single video file using ffmpeg muxing.
 
     https://stackoverflow.com/questions/7333232/how-to-concatenate-two-mp4-files-using-ffmpeg
@@ -15,7 +15,8 @@ def combine_videos(input_files, output_file):
         video_type_check_command = ["ffprobe",  "-v",  "error",  "-select_streams",  "v:0",  "-show_entries",
                                     "stream=codec_name",  "-of",  "default=noprint_wrappers=1:nokey=1", input_files[0]]
         output_file_format = subprocess.check_output(video_type_check_command).decode("utf-8").strip()
-        print("\toutput_file_format: {}".format(output_file_format))
+        if verbose:
+            print("\toutput_file_format: {}".format(output_file_format))
     except subprocess.CalledProcessError as e:
         error = "{}|{}".format(e.returncode, e.output)
         return error
@@ -29,15 +30,24 @@ def combine_videos(input_files, output_file):
     # Create command list to execute ffmpeg.
     combine_command = []
     if output_file_format == "h264":
-        combine_command = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "warning", "-f", "concat", "-safe", "0", "-i" , temporary_file, "-c", "copy", output_file.replace(os.sep, "/")]
+        if verbose:
+            verbosity = "info"
+        else:
+            verbosity = "warning"
+        combine_command = ["ffmpeg", "-y", "-hide_banner", "-loglevel", verbosity, "-f", "concat", "-safe", "0", "-i" , temporary_file, "-c", "copy", output_file.replace(os.sep, "/")]
     else:
         print("\tUnsupported output format: {}. Trying Anyways".format(output_file_format))
-        combine_command = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "warning", "-f", "concat", "-safe", "0", "-i" , temporary_file, "-c", "copy", output_file.replace(os.sep, "/")]
+        if verbose:
+            verbosity = "info"
+        else:
+            verbosity = "warning"
+        combine_command = ["ffmpeg", "-y", "-hide_banner", "-loglevel", verbosity, "-f", "concat", "-safe", "0", "-i" , temporary_file, "-c", "copy", output_file.replace(os.sep, "/")]
 
 
     try:
         output_text = subprocess.check_output(combine_command).decode("utf-8")
-        print("\toutput_text: {}".format(output_text))
+        if verbose:
+            print("\toutput_text: {}".format(output_text))
     except subprocess.CalledProcessError as e:
         error = "{}|{}".format(e.returncode, e.output)
         return error
